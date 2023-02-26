@@ -17,8 +17,7 @@ final class Dispatcher implements DispatcherInterface
 {
     use HandleTrait;
 
-    /** @var MessageBusInterface */
-    private $messageBus;
+    private MessageBusInterface $messageBus;
 
     /** @var PaymentCommandFactoryInterface */
     private $commandFactory;

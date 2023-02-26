@@ -11,18 +11,19 @@ declare(strict_types=1);
 namespace BitBag\SyliusAdyenPlugin\Callback;
 
 use Sylius\Component\Core\Model\OrderInterface;
+use Symfony\Component\HttpFoundation\Exception\SessionNotFoundException;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class PreserveOrderTokenUponRedirectionCallback
 {
     public const NON_FINALIZED_CART_SESSION_KEY = '_ADYEN_PAYMENT_IN_PROGRESS';
 
-    /** @var SessionInterface */
-    private $session;
+    private SessionInterface|RequestStack $sessionOrRequestStack;
 
-    public function __construct(SessionInterface $session)
+    public function __construct(SessionInterface|RequestStack $sessionOrRequestStack)
     {
-        $this->session = $session;
+        $this->sessionOrRequestStack = $sessionOrRequestStack;
     }
 
     public function __invoke(OrderInterface $order): void
@@ -33,9 +34,22 @@ class PreserveOrderTokenUponRedirectionCallback
             return;
         }
 
-        $this->session->set(
+        $this->getSession()?->set(
             self::NON_FINALIZED_CART_SESSION_KEY,
             $tokenValue
         );
+    }
+
+    private function getSession(): ?SessionInterface
+    {
+        if ($this->sessionOrRequestStack instanceof SessionInterface) {
+            return $this->sessionOrRequestStack;
+        }
+
+        try {
+            return $this->sessionOrRequestStack->getSession();
+        } catch (SessionNotFoundException $exception) {
+            return null;
+        }
     }
 }
