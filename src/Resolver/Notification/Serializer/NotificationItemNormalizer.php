@@ -97,7 +97,7 @@ final class NotificationItemNormalizer implements DenormalizerAwareInterface, De
         $data,
         string $format = null,
         array $context = []
-    ) {
+    ): bool {
         return
             $data instanceof NotificationItemData
             && !isset($context[$this->getNormalizationMarking($data)])
