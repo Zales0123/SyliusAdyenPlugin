@@ -48,6 +48,10 @@ class ProcessNotificationsAction
 
     public function __invoke(string $code, Request $request): Response
     {
+        $this->logger->info(
+            sprintf('Route "%s" matched with code "%s"', $request->attributes->get('_route'), $code)
+        );
+
         foreach ($this->notificationResolver->resolve($code, $request) as $notificationItem) {
             if (!$notificationItem->success) {
                 $this->logger->error(\sprintf(
