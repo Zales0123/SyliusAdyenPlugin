@@ -16,15 +16,20 @@ jobs:
     tests:
         runs-on: ubuntu-18.04
 
-        name: "PHP ${{ matrix.php }}, MySQL ${{ matrix.mysql }}, Sylius ${{ matrix.sylius }}"
+        name: "PHP ${{ matrix.php }}, MySQL ${{ matrix.mysql }}, Sylius ${{ matrix.sylius }}, Symfony ${{ matrix.symfony }}"
 
         strategy:
             fail-fast: false
             matrix:
                 php: [8.0, 8.1]
+                symfony: ["^5.4", "^6.0"]
                 node: [14.18]
                 mysql: [5.7, 8.0]
                 sylius: ["1.11.*", "1.12.*"]
+
+                exclude:
+                    -   symfony: "^6.0"
+                        sylius: "1.11.*"
 
         env:
             APP_ENV: test
@@ -91,7 +96,15 @@ jobs:
                         ${{ runner.os }}-php-${{ matrix.php }}-composer-
 
             -
-                name: Restrcting Sylius version
+                name: Restrict Symfony version
+                if: matrix.symfony != ''
+                run: |
+                    composer global config --no-plugins allow-plugins.symfony/flex true
+                    composer global require --no-progress --no-scripts --no-plugins "symfony/flex:^1.10"
+                    composer config extra.symfony.require "${{ matrix.symfony }}"
+
+            -
+                name: Restrict Sylius version
                 if: matrix.sylius != ''
                 run: composer require "sylius/sylius:${{ matrix.sylius }}" --no-update --no-scripts --no-interaction
 
