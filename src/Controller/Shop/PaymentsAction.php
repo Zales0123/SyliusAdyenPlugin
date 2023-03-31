@@ -100,12 +100,14 @@ class PaymentsAction
 
     public function __invoke(Request $request, ?string $code = null): JsonResponse
     {
-        $this->logger->info(
+        $this->logger->notice(
             sprintf('Route "%s" matched with code "%s"', $request->attributes->get('_route'), $code)
         );
 
         $order = $this->paymentCheckoutOrderResolver->resolve();
         $this->prepareOrder($request, $order);
+
+        $this->logger->notice(sprintf('Order which is being paid: #%s', $order->getTokenValue()));
 
         if (null !== $code) {
             $this->dispatcher->dispatch(new TakeOverPayment($order, $code));
@@ -126,6 +128,11 @@ class PaymentsAction
             $order,
             $customerIdentifier
         );
+
+        $this->logger->notice(
+            sprintf('Result of submitPayment for payment with ID %d from order %s', $payment->getId(), $order->getTokenValue())
+        );
+        $this->logger->notice(json_encode($result));
 
         $payment->setDetails($result);
         $this->dispatcher->dispatch(new PaymentStatusReceived($payment));
