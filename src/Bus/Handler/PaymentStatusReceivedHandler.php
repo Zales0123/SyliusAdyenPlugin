@@ -66,12 +66,10 @@ final class PaymentStatusReceivedHandler implements MessageHandlerInterface
 
     public function __invoke(PaymentStatusReceived $command): void
     {
-        $this->logger->notice(sprintf('Handling "PaymentStatusReceived" command for payment with ID %d', [$command->getPayment()->getId()]));
+        $this->logger->info(sprintf('Handling "PaymentStatusReceived" command for payment with ID %d', [$command->getPayment()->getId()]));
 
         $payment = $command->getPayment();
         $resultCode = $this->getResultCode($command->getPayment());
-
-        $this->logger->notice(sprintf('Result code for payment with ID %d is %s', [$payment->getId(), $resultCode]));
 
         if ($this->isAccepted($resultCode)) {
             $this->updateOrderState($this->getOrderFromPayment($payment));
