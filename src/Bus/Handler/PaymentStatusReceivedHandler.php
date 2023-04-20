@@ -15,7 +15,6 @@ use BitBag\SyliusAdyenPlugin\Bus\Command\PaymentStatusReceived;
 use BitBag\SyliusAdyenPlugin\Bus\DispatcherInterface;
 use BitBag\SyliusAdyenPlugin\Exception\UnmappedAdyenActionException;
 use BitBag\SyliusAdyenPlugin\Traits\OrderFromPaymentTrait;
-use Psr\Log\LoggerInterface;
 use SM\Factory\FactoryInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
@@ -45,29 +44,22 @@ final class PaymentStatusReceivedHandler implements MessageHandlerInterface
     /** @var MessageBusInterface */
     private $commandBus;
 
-    /** @var LoggerInterface */
-    private $logger;
-
     public function __construct(
         FactoryInterface $stateMachineFactory,
         RepositoryInterface $paymentRepository,
         RepositoryInterface $orderRepository,
         DispatcherInterface $dispatcher,
-        MessageBusInterface $commandBus,
-        LoggerInterface $logger
+        MessageBusInterface $commandBus
     ) {
         $this->stateMachineFactory = $stateMachineFactory;
         $this->paymentRepository = $paymentRepository;
         $this->dispatcher = $dispatcher;
         $this->orderRepository = $orderRepository;
         $this->commandBus = $commandBus;
-        $this->logger = $logger;
     }
 
     public function __invoke(PaymentStatusReceived $command): void
     {
-        $this->logger->info(sprintf('Handling "PaymentStatusReceived" command for payment with ID %d', [$command->getPayment()->getId()]));
-
         $payment = $command->getPayment();
         $resultCode = $this->getResultCode($command->getPayment());
 
@@ -81,8 +73,7 @@ final class PaymentStatusReceivedHandler implements MessageHandlerInterface
 
             $this->processCode($resultCode, $command);
         } catch (\InvalidArgumentException $ex) {
-            $this->logger->error(sprintf('Reference for payment with ID %d cannot be created', [$payment->getId()]));
-            $this->logger->error($ex->getMessage());
+            // probably redirect, we don't have a pspReference at this stage
         }
     }
 
@@ -92,8 +83,7 @@ final class PaymentStatusReceivedHandler implements MessageHandlerInterface
             $subcommand = $this->dispatcher->getCommandFactory()->createForEvent($resultCode, $command->getPayment());
             $this->dispatcher->dispatch($subcommand);
         } catch (UnmappedAdyenActionException $ex) {
-            $this->logger->error(sprintf('Unmapped Adyen action for payment with ID %d', [$command->getPayment()->getId()]));
-            $this->logger->error($ex->getMessage());
+            // nothing here
         }
     }
 

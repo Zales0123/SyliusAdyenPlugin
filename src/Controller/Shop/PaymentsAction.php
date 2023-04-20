@@ -21,7 +21,6 @@ use BitBag\SyliusAdyenPlugin\Provider\AdyenClientProviderInterface;
 use BitBag\SyliusAdyenPlugin\Resolver\Order\PaymentCheckoutOrderResolverInterface;
 use BitBag\SyliusAdyenPlugin\Traits\PayableOrderPaymentTrait;
 use BitBag\SyliusAdyenPlugin\Traits\PaymentFromOrderTrait;
-use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -52,23 +51,18 @@ class PaymentsAction
     /** @var PaymentResponseProcessorInterface */
     private $paymentResponseProcessor;
 
-    /** @var LoggerInterface */
-    private $logger;
-
     public function __construct(
         AdyenClientProviderInterface $adyenClientProvider,
         UrlGeneratorInterface $urlGenerator,
         PaymentCheckoutOrderResolverInterface $paymentCheckoutOrderResolver,
         DispatcherInterface $dispatcher,
-        PaymentResponseProcessorInterface $paymentResponseProcessor,
-        LoggerInterface $logger
+        PaymentResponseProcessorInterface $paymentResponseProcessor
     ) {
         $this->adyenClientProvider = $adyenClientProvider;
         $this->urlGenerator = $urlGenerator;
         $this->paymentCheckoutOrderResolver = $paymentCheckoutOrderResolver;
         $this->dispatcher = $dispatcher;
         $this->paymentResponseProcessor = $paymentResponseProcessor;
-        $this->logger = $logger;
     }
 
     private function prepareTargetUrl(OrderInterface $order): string
@@ -100,10 +94,6 @@ class PaymentsAction
 
     public function __invoke(Request $request, ?string $code = null): JsonResponse
     {
-        $this->logger->info(
-            sprintf('Route "%s" matched with code "%s"', $request->attributes->get('_route'), $code)
-        );
-
         $order = $this->paymentCheckoutOrderResolver->resolve();
         $this->prepareOrder($request, $order);
 
